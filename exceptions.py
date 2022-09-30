@@ -4,6 +4,12 @@ class StatusError(KeyError):
     message = "Ошибка извлечения статуса проверки"
 
 
+class NoDictError(TypeError):
+    """В ответе не получен словарь."""
+
+    message = "В ответе не получен словарь"
+
+
 class ServerError(Exception):
     """Сервер API недоступен."""
 

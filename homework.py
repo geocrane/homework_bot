@@ -9,6 +9,7 @@ from telegram import Bot
 from exceptions import (
     EmptyList,
     MessageError,
+    NoDictError,
     ResponseError,
     ServerError,
     StatusError,
@@ -71,7 +72,7 @@ def check_response(response):
     API по ключу 'homeworks'.
     """
     if type(response) == list:
-        response = response[0]
+        raise NoDictError
     elif not type(response.get("homeworks")) == list:
         logging.error("Домашки приходят не в виде списка")
         raise ResponseError
@@ -149,7 +150,8 @@ def main():
                 StatusError,
                 ResponseError,
                 EmptyList,
-                MessageError
+                MessageError,
+                NoDictError
             ) as err:
                 saved_message = message_sendler(
                     bot, err.message, saved_message
