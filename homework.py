@@ -47,6 +47,7 @@ NO_ATTR_ERR_MSG = (
 NO_HOMEWORK_STATUS = (
     "Неизвестный статус. Ожидается: {valid_statuses} Получен: {status}"
 )
+NO_TOKEN_MSG = "Отсутствует обязательный токен {token}"
 STATUS_CHANGE_MSG = 'Изменился статус проверки работы "{homework}". {status}'
 
 
@@ -136,17 +137,12 @@ def parse_status(homework):
 
 def check_tokens():
     """Проверяет доступность необходимых переменных окружения."""
-    if not TELEGRAM_CHAT_ID:
-        logging.critical("Отсутствует обязательный токен 'TELEGRAM_CHAT_ID'")
-        return False
-    elif not TELEGRAM_TOKEN:
-        logging.critical("Отсутствует обязательный токен 'TELEGRAM_TOKEN'")
-        return False
-    elif not PRACTICUM_TOKEN:
-        logging.critical("Отсутствует обязательный токен 'PRACTICUM_TOKEN'")
-        return False
-    else:
-        return True
+    for name in ("TELEGRAM_TOKEN", "PRACTICUM_TOKEN", "TELEGRAM_CHAT_ID"):
+        if not globals()[name]:
+            logging.critical(NO_TOKEN_MSG.format(token=name))
+            return False
+        else:
+            return True
 
 
 def main():
