@@ -76,7 +76,6 @@ def get_api_answer(current_timestamp):
         Timeout,
         ConnectionError,
     ) as err:
-        pass
         logging.error(err)
     if not response.status_code == 200:
         raise ServerError(
