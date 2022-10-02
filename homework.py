@@ -24,14 +24,14 @@ HOMEWORK_VERDICTES = {
     "rejected": "Работа проверена: у ревьюера есть замечания.",
 }
 NETWORK_ERROR = (
-    "Сбой сети {error} \nАдрес: {url}, " "headers: {headers}, params: {params}"
+    "Сбой сети {error}. url: {url}, " "headers: {headers}, params: {params}"
 )
 STATUS_CODE_ERROR = (
-    "Неверный код возврата: {code}.\nАдрес: {url}, "
+    "Неверный код возврата: {code}. url: {url}, "
     "headers: {headers}, params: {params}"
 )
 SERVISE_DENAIED_ERROR = (
-    "Отказ в обслуживании. {key}:{error} \nАдрес: {url}, "
+    "Отказ в обслуживании. {key}:{error} url: {url}, "
     "headers: {headers}, params: {params}"
 )
 NOT_DICT_ERROR = "Тип данных ответа {type}. Ожидается dict"
