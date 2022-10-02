@@ -158,7 +158,6 @@ def main():
             response = get_api_answer(current_timestamp)
             homeworks = check_response(response)
             if not homeworks:
-                time.sleep(RETRY_TIME)
                 continue
             message = parse_status(homeworks[0])
             if message != saved_message:
@@ -171,7 +170,6 @@ def main():
             logging.error("", exc_info=True)
             error_message = traceback.format_exc(limit=None, chain=True)
             if error_message == saved_message:
-                time.sleep(RETRY_TIME)
                 continue
             try:
                 send_message(bot, error_message)
