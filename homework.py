@@ -1,14 +1,13 @@
 import logging
 import os
 import time
-import traceback
 from logging.handlers import RotatingFileHandler
 
 import requests
 from dotenv import load_dotenv
 from telegram import Bot
 
-from exceptions import MessageError, ServerError, ServiceDenaied
+from exceptions import ServerError, ServiceDenaied, StatusCodeError
 
 load_dotenv()
 
@@ -25,14 +24,14 @@ HOMEWORK_VERDICTES = {
     "rejected": "Работа проверена: у ревьюера есть замечания.",
 }
 NETWORK_ERROR = (
-    "Сбой сети. \nАдрес: {endpoint}, " "headers: {headers}, params: {params}"
+    "Сбой сети {error} \nАдрес: {url}, " "headers: {headers}, params: {params}"
 )
 STATUS_CODE_ERROR = (
-    "Неверный код возврата: {code}.\nАдрес: {endpoint}, "
+    "Неверный код возврата: {code}.\nАдрес: {url}, "
     "headers: {headers}, params: {params}"
 )
 SERVISE_DENAIED_ERROR = (
-    "Отказ в обслуживании.\nАдрес: {endpoint}, "
+    "Отказ в обслуживании. {key}:{error} \nАдрес: {url}, "
     "headers: {headers}, params: {params}"
 )
 NOT_DICT_ERROR = "Тип данных ответа {type}. Ожидается dict"
@@ -44,7 +43,8 @@ NO_ANY_TOKEN = "Отсутствует один из обязательных т
 STATUS_CHANGE = 'Изменился статус проверки работы "{homework}". {status}'
 RESPONSE_JSON_ERRORS = ["code", "error"]
 SEND_MESSAGE = "Отправлено сообщение: {message}"
-MESSAGE_FAILED = "Не удалось отправить сообщение {message}, chat_id: {chat_id}"
+MESSAGE_FAILED = "Не удалось отправить сообщение. chat_id: {chat_id}"
+ERROR_MESSAGE = "Ошибка! {error}"
 
 
 def send_message(bot, message):
@@ -52,13 +52,8 @@ def send_message(bot, message):
     Принимает на вход два параметра: экземпляр класса Bot и строку с текстом
     сообщения.
     """
-    try:
-        bot.send_message(TELEGRAM_CHAT_ID, message)
-        logging.info(SEND_MESSAGE.format(message=message))
-    except Exception:
-        raise MessageError(
-            MESSAGE_FAILED.format(message=message, chat_id=TELEGRAM_CHAT_ID)
-        )
+    bot.send_message(TELEGRAM_CHAT_ID, message)
+    logging.info(SEND_MESSAGE.format(message=message))
 
 
 def get_api_answer(current_timestamp):
@@ -68,33 +63,23 @@ def get_api_answer(current_timestamp):
     данных Python.
     """
     params = {"from_date": current_timestamp}
+    request_data = dict(url=ENDPOINT, headers=HEADERS, params=params)
     try:
-        response = requests.get(ENDPOINT, headers=HEADERS, params=params)
+        response = requests.get(**request_data)
     except requests.exceptions.RequestException as error:
-        raise error(
-            NETWORK_ERROR.format(
-                endpoint=ENDPOINT,
-                headers=HEADERS,
-                params=params,
-            )
+        raise ServerError(
+            NETWORK_ERROR.format(exception=error, **request_data)
         )
     if not response.status_code == 200:
-        raise ServerError(
-            STATUS_CODE_ERROR.format(
-                code=response.status_code,
-                endpoint=ENDPOINT,
-                headers=HEADERS,
-                params=params,
-            )
+        raise StatusCodeError(
+            STATUS_CODE_ERROR.format(code=response.status_code, **request_data)
         )
     response = response.json()
     for key in RESPONSE_JSON_ERRORS:
         if key in response:
             raise ServiceDenaied(
                 SERVISE_DENAIED_ERROR.format(
-                    endpoint=ENDPOINT,
-                    headers=HEADERS,
-                    params=params,
+                    key=key, error=response[key], **request_data
                 )
             )
     return response
@@ -150,10 +135,7 @@ def main():
     bot = Bot(token=TELEGRAM_TOKEN)
     current_timestamp = 0
     saved_message = None
-    retry = 0
     while True:
-        time.sleep(retry)
-        retry = RETRY_TIME
         try:
             response = get_api_answer(current_timestamp)
             homeworks = check_response(response)
@@ -166,27 +148,28 @@ def main():
                 current_timestamp = response.get(
                     "current_date", current_timestamp
                 )
-        except Exception:
-            logging.error("", exc_info=True)
-            error_message = traceback.format_exc(limit=None, chain=True)
-            if error_message == saved_message:
+        except Exception as error:
+            logging.error(ERROR_MESSAGE.format(error=error))
+            if str(error) == saved_message:
                 continue
             try:
-                send_message(bot, error_message)
+                send_message(bot, str(error))
+                saved_message = str(error)
             except Exception:
                 logging.error(
                     MESSAGE_FAILED.format(
-                        message=error_message, chat_id=TELEGRAM_CHAT_ID
+                        chat_id=TELEGRAM_CHAT_ID
                     ),
                     exc_info=True,
                 )
-            saved_message = error_message
+        finally:
+            time.sleep(RETRY_TIME)
 
 
 if __name__ == "__main__":
 
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.INFO,
         handlers=[
             RotatingFileHandler(
                 __file__ + ".log", maxBytes=5000000, backupCount=5
