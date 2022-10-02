@@ -2,9 +2,9 @@ import logging
 import os
 import time
 import traceback
-import requests
 from logging.handlers import RotatingFileHandler
 
+import requests
 from dotenv import load_dotenv
 from telegram import Bot
 
