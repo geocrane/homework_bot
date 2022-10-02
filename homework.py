@@ -8,7 +8,7 @@ from logging.handlers import RotatingFileHandler
 from dotenv import load_dotenv
 from telegram import Bot
 
-from exceptions import ServerError, ServiceDenaied
+from exceptions import MessageError, ServerError, ServiceDenaied
 
 load_dotenv()
 
@@ -44,7 +44,7 @@ NO_ANY_TOKEN = "Отсутствует один из обязательных т
 STATUS_CHANGE = 'Изменился статус проверки работы "{homework}". {status}'
 RESPONSE_JSON_ERRORS = ["code", "error"]
 SEND_MESSAGE = "Отправлено сообщение: {message}"
-ERROR_MESSAGE_FAILED = "Не удалось отправить сообщение об ошибке"
+MESSAGE_FAILED = "Не удалось отправить сообщение {message}, chat_id: {chat_id}"
 
 
 def send_message(bot, message):
@@ -52,8 +52,13 @@ def send_message(bot, message):
     Принимает на вход два параметра: экземпляр класса Bot и строку с текстом
     сообщения.
     """
-    bot.send_message(TELEGRAM_CHAT_ID, message)
-    logging.info(SEND_MESSAGE.format(message=message))
+    try:
+        bot.send_message(TELEGRAM_CHAT_ID, message)
+        logging.info(SEND_MESSAGE.format(message=message))
+    except Exception:
+        raise MessageError(
+            MESSAGE_FAILED.format(message=message, chat_id=TELEGRAM_CHAT_ID)
+        )
 
 
 def get_api_answer(current_timestamp):
@@ -172,7 +177,9 @@ def main():
                 send_message(bot, error_message)
             except Exception:
                 logging.error(
-                    ERROR_MESSAGE_FAILED,
+                    MESSAGE_FAILED.format(
+                        message=error_message, chat_id=TELEGRAM_CHAT_ID
+                    ),
                     exc_info=True,
                 )
             saved_message = error_message
