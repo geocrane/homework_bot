@@ -48,20 +48,19 @@ ERROR_MESSAGE = "Ошибка! {error}"
 
 
 def send_message(bot, message):
-    """Отправляет сообщение в Telegram чат определяемый TELEGRAM_CHAT_ID.
-    Принимает на вход два параметра: экземпляр класса Bot и строку с текстом
-    сообщения.
-    """
-    bot.send_message(TELEGRAM_CHAT_ID, message)
-    logging.info(SEND_MESSAGE.format(message=message))
+    """Отправляет сообщение в Telegram чат определяемый TELEGRAM_CHAT_ID."""
+    try:
+        bot.send_message(TELEGRAM_CHAT_ID, message)
+        logging.info(SEND_MESSAGE.format(message=message))
+    except Exception:
+        logging.error(
+            MESSAGE_FAILED.format(chat_id=TELEGRAM_CHAT_ID),
+            exc_info=True,
+        )
 
 
 def get_api_answer(current_timestamp):
-    """Делает запрос к единственному эндпоинту API-сервиса.
-    В качестве параметра функция получает временную метку. В случае успешного
-    запроса должна вернуть ответ API, преобразовав его из формата JSON к типам
-    данных Python.
-    """
+    """Делает запрос к эндпоинту API-сервиса."""
     params = {"from_date": current_timestamp}
     request_data = dict(url=ENDPOINT, headers=HEADERS, params=params)
     try:
@@ -74,6 +73,7 @@ def get_api_answer(current_timestamp):
         raise StatusCodeError(
             STATUS_CODE_ERROR.format(code=response.status_code, **request_data)
         )
+    logging.info(response.reason)
     response = response.json()
     for key in RESPONSE_JSON_ERRORS:
         if key in response:
@@ -86,12 +86,7 @@ def get_api_answer(current_timestamp):
 
 
 def check_response(response):
-    """Проверяет ответ API на корректность.
-    В качестве параметра функция получает ответ API, приведенный к типам
-    данных Python. Если ответ API соответствует ожиданиям, то функция должна
-    вернуть список домашних работ (он может быть и пустым), доступный в ответе
-    API по ключу 'homeworks'.
-    """
+    """Проверяет ответ API на корректность."""
     if not isinstance(response, dict):
         raise TypeError(NOT_DICT_ERROR.format(type=type(response)))
     if "homeworks" not in response:
@@ -103,12 +98,7 @@ def check_response(response):
 
 
 def parse_status(homework):
-    """Извлекает из информации о конкретной домашней работе ее статус.
-    В качестве параметра функция получает только один элемент из списка
-    домашних работ. В случае успеха, функция возвращает подготовленную для
-    отправки в Telegram строку, содержащую один из вердиктов словаря
-    HOMEWORK_VERDICTES.
-    """
+    """Извлекает из информации о конкретной домашней работе ее статус."""
     status = homework["status"]
     name = homework["homework_name"]
     if status not in HOMEWORK_VERDICTES:
@@ -120,12 +110,12 @@ def parse_status(homework):
 
 def check_tokens():
     """Проверяет доступность необходимых переменных окружения."""
-    bool_value = True
+    tokens_is_exist = True
     for token in TOKENS:
         if not globals()[token]:
             logging.critical(NO_SUCH_TOKEN.format(token=token))
-            bool_value = False
-    return bool_value
+            tokens_is_exist = False
+    return tokens_is_exist
 
 
 def main():
@@ -152,16 +142,8 @@ def main():
             logging.error(ERROR_MESSAGE.format(error=error))
             if str(error) == saved_message:
                 continue
-            try:
-                send_message(bot, str(error))
-                saved_message = str(error)
-            except Exception:
-                logging.error(
-                    MESSAGE_FAILED.format(
-                        chat_id=TELEGRAM_CHAT_ID
-                    ),
-                    exc_info=True,
-                )
+            send_message(bot, str(error))
+            saved_message = str(error)
         finally:
             time.sleep(RETRY_TIME)
 
