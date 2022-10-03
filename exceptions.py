@@ -1,9 +1,3 @@
-class ServerError(Exception):
-    """Сервер недоступен."""
-
-    pass
-
-
 class StatusCodeError(Exception):
     """Не верный код возврата."""
 

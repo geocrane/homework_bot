@@ -7,7 +7,7 @@ import requests
 from dotenv import load_dotenv
 from telegram import Bot
 
-from exceptions import ServerError, ServiceDenaied, StatusCodeError
+from exceptions import ServiceDenaied, StatusCodeError
 
 load_dotenv()
 
@@ -66,14 +66,13 @@ def get_api_answer(current_timestamp):
     try:
         response = requests.get(**request_data)
     except requests.exceptions.RequestException as error:
-        raise ServerError(
+        raise ConnectionError(
             NETWORK_ERROR.format(exception=error, **request_data)
         )
     if not response.status_code == 200:
         raise StatusCodeError(
             STATUS_CODE_ERROR.format(code=response.status_code, **request_data)
         )
-    logging.info(response.reason)
     response = response.json()
     for key in RESPONSE_JSON_ERRORS:
         if key in response:
