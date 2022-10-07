@@ -15,7 +15,7 @@ PRACTICUM_TOKEN = os.getenv("PRACTICUM_TOKEN")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 TOKENS = ["TELEGRAM_TOKEN", "PRACTICUM_TOKEN", "TELEGRAM_CHAT_ID"]
-RETRY_TIME = 6
+RETRY_TIME = 600
 ENDPOINT = "https://practicum.yandex.ru/api/user_api/homework_statuses/"
 HEADERS = {"Authorization": f"OAuth {PRACTICUM_TOKEN}"}
 HOMEWORK_VERDICTES = {
@@ -119,17 +119,15 @@ def check_tokens():
 
 def read_cache(file):
     """Прочитать кэш из файла."""
-    handle = open(file, "r")
-    cache = handle.read()
-    handle.close()
+    with open(file, "r") as cache:
+        cache = cache.read()
     return cache
 
 
 def write_cache(file, message):
     """Записать кэш в файл."""
-    handle = open(file, "w")
-    handle.write(message)
-    handle.close()
+    with open(file, "w") as cache:
+        cache.write(message)
 
 
 def main():
