@@ -138,7 +138,6 @@ def main():
         raise ValueError(NO_ANY_TOKEN)
     bot = Bot(token=TELEGRAM_TOKEN)
     current_timestamp = 0
-    cache = None
     while True:
         try:
             response = get_api_answer(current_timestamp)
