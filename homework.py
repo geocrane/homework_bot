@@ -135,7 +135,7 @@ def main():
     if not check_tokens():
         raise ValueError(NO_ANY_TOKEN)
     bot = Bot(token=TELEGRAM_TOKEN)
-    current_timestamp = 0
+    current_timestamp = int(time.time()) - 1800
     while True:
         try:
             response = get_api_answer(current_timestamp)

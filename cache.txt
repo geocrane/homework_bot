@@ -1,1 +1,1 @@
-Неверный код возврата: 404. url: https://practicum.yandex.ru/api/user_api/homework_statuse/, headers: {'Authorization': 'OAuth y0_AgAAAAAJcREFAAYckQAAAADPqN4XNNM_rUfES3y7w7ZSuamGIKZUeWU'}, params: {'from_date': 0}
+Изменился статус проверки работы "geocrane__homework_bot.zip". Работа проверена: ревьюеру всё понравилось. Ура!
