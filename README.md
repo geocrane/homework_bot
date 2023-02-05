@@ -31,4 +31,5 @@ pip install -r requirements.txt
 ```
 Запустите выполнение файла `homework.py`
 
+<p></p>
 <h3 align="center">developed by: Sergey S. Zhuravlev</h3>
