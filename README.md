@@ -22,11 +22,14 @@ git clone https://github.com/geocrane/homework_bot.git
 Для запуска поочередно выполните:
 ```
 python3 -m venv venv
-
+```
+```
 source venv/bin/activate
-
+```
+```
 python3 -m pip install --upgrade pip
-
+```
+```
 pip install -r requirements.txt
 ```
 Запустите выполнение файла `homework.py`
