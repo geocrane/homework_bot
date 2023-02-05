@@ -15,7 +15,7 @@ PRACTICUM_TOKEN = os.getenv("PRACTICUM_TOKEN")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 TOKENS = ["TELEGRAM_TOKEN", "PRACTICUM_TOKEN", "TELEGRAM_CHAT_ID"]
-RETRY_TIME = 600
+RETRY_TIME = 300
 ENDPOINT = "https://practicum.yandex.ru/api/user_api/homework_statuses/"
 HEADERS = {"Authorization": f"OAuth {PRACTICUM_TOKEN}"}
 HOMEWORK_VERDICTES = {
@@ -117,25 +117,13 @@ def check_tokens():
     return tokens_is_exist
 
 
-def read_cache(file):
-    """Прочитать кэш из файла."""
-    with open(file, "r") as cache:
-        cache = cache.read()
-    return cache
-
-
-def write_cache(file, message):
-    """Записать кэш в файл."""
-    with open(file, "w") as cache:
-        cache.write(message)
-
-
 def main():
     """Основная логика работы бота."""
     if not check_tokens():
         raise ValueError(NO_ANY_TOKEN)
     bot = Bot(token=TELEGRAM_TOKEN)
-    current_timestamp = int(time.time()) - 1800
+    current_timestamp = 0
+    saved_message = None
     while True:
         try:
             response = get_api_answer(current_timestamp)
@@ -143,20 +131,17 @@ def main():
             if not homeworks:
                 continue
             message = parse_status(homeworks[0])
-            cache = read_cache("cache.txt")
-            if message != cache:
+            if message != saved_message:
                 send_message(bot, message)
-                write_cache("cache.txt", message)
+                saved_message = message
                 current_timestamp = response.get(
                     "current_date", current_timestamp
                 )
         except Exception as error:
             logging.error(ERROR_MESSAGE.format(error=error))
-            cache = read_cache("cache.txt")
-            if str(error) == cache:
+            if str(error) == saved_message:
                 continue
             send_message(bot, str(error))
-            write_cache("cache.txt", str(error))
         finally:
             time.sleep(RETRY_TIME)
 
